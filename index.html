@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#3b6ea5">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>狗狗廁所紀錄</title>
+<style>
+:root{
+  --bg:#faf6ef; --card:#fff; --ink:#2b2a27; --mute:#7a746a; --line:#e9e2d6;
+  --good:#2f8f5b; --good-bg:#e3f4ea; --warn:#d9822b; --warn-bg:#fdf0df; --bad:#c8453a; --bad-bg:#fbe7e4;
+  --accent:#3b6ea5; --accent-bg:#e5eef8; --out:#8a7ac8; --out-bg:#ece8f8; --sleep-bg:#e9e9f3;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#1d1c1a; --card:#292724; --ink:#f1ece3; --mute:#a39b8e; --line:#3a3731;
+  --good:#58c488; --good-bg:#1f3a2c; --warn:#f0a257; --warn-bg:#3d2e1b; --bad:#ef7b70; --bad-bg:#43241f;
+  --accent:#7fb0e6; --accent-bg:#23303f; --out:#b3a6ec; --out-bg:#2d2942; --sleep-bg:#2a2a38;}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif}
+main{max-width:560px;margin:0 auto;padding:16px 14px 60px}
+h1{font-size:20px;margin:4px 0 2px}
+h2{font-size:15px;margin:0 0 10px;color:var(--mute);font-weight:600;letter-spacing:.02em}
+.sub{color:var(--mute);font-size:13px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+input[type=text],input[type=datetime-local]{font:inherit;color:inherit;background:transparent;border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.name{font-size:20px;font-weight:700;border:none!important;padding:0!important;width:8em;border-bottom:1px dashed var(--line)!important;border-radius:0!important}
+button{font:inherit;color:inherit;cursor:pointer}
+.seg{display:flex;gap:6px;margin-bottom:10px}
+.seg button{flex:1;border:1px solid var(--line);background:transparent;border-radius:10px;padding:8px 2px;font-size:13px}
+.seg button.on.spot{background:var(--good-bg);border-color:var(--good);color:var(--good);font-weight:700}
+.seg button.on.out{background:var(--out-bg);border-color:var(--out);color:var(--out);font-weight:700}
+.seg button.on.other{background:var(--bad-bg);border-color:var(--bad);color:var(--bad);font-weight:700}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.chips button{border:1px solid var(--line);background:transparent;border-radius:999px;padding:3px 11px;font-size:13px;color:var(--mute)}
+.chips button.on{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);font-weight:600}
+.big{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.big button{border:none;border-radius:14px;padding:16px 8px;font-size:18px;font-weight:700;background:var(--accent);color:#fff}
+.big button.poop{background:#8a6240}
+.big button:active{transform:scale(.97)}
+.acts{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
+.acts button{border:1px solid var(--line);background:transparent;border-radius:10px;padding:8px 0;font-size:12.5px}
+.status{border-radius:14px;padding:14px;margin-bottom:12px}
+.status.wait{background:var(--accent-bg)} .status.now{background:var(--good-bg)} .status.over{background:var(--warn-bg)}
+.status.none{background:var(--card);border:1px solid var(--line)} .status.asleep{background:var(--sleep-bg)}
+.status .head{font-size:13px;color:var(--mute)}
+.status .main{font-size:22px;font-weight:800;margin:2px 0}
+.status .note{font-size:13px;color:var(--mute)}
+.cand{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:6px 0;border-top:1px solid var(--line)}
+.cand small{color:var(--mute)}
+.bars{display:flex;align-items:flex-end;gap:3px;height:70px}
+.bars div{flex:1;background:var(--accent);border-radius:3px 3px 0 0;min-height:2px;opacity:.85}
+.axis{display:flex;gap:3px;font-size:10px;color:var(--mute);margin-top:3px}
+.axis span{flex:1;text-align:center}
+.days{display:flex;gap:6px}
+.day{flex:1;text-align:center;font-size:11px;color:var(--mute)}
+.day .stack{height:70px;display:flex;flex-direction:column-reverse;border-radius:6px;overflow:hidden;background:var(--line);margin-bottom:3px}
+.day .stack i{display:block}
+.day .g{background:var(--good)} .day .r{background:var(--bad)} .day .o{background:var(--out)}
+.rate{font-size:14px;margin-top:8px}
+.legend{font-size:12px;color:var(--mute);margin-top:4px}
+.row{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.row .t{color:var(--mute);width:3.4em;flex:none;font-variant-numeric:tabular-nums}
+.row .what{flex:1}
+.tag{border:1px solid;border-radius:999px;padding:1px 9px;font-size:12px;background:transparent}
+.tag.spot{color:var(--good);border-color:var(--good)} .tag.out{color:var(--out);border-color:var(--out)} .tag.other{color:var(--bad);border-color:var(--bad)}
+.del{border:none;background:transparent;color:var(--mute);font-size:13px;padding:4px 6px}
+.del.arm{color:var(--bad);font-weight:700}
+.explain{font-size:13px;color:var(--mute)}
+.explain b{color:var(--ink)}
+textarea{width:100%;height:110px;font:12px monospace;color:inherit;background:transparent;border:1px solid var(--line);border-radius:8px;margin-top:8px}
+.link{border:1px solid var(--line);background:transparent;border-radius:10px;padding:6px 12px;font-size:13px}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.msg{font-size:13px;margin-top:8px}
+.sync{font-size:12px;color:var(--mute);text-align:right}
+</style>
+</head>
+<body>
+<main>
+  <h1>🐶 <input id="name" class="name" type="text" maxlength="12" value="狗狗" aria-label="狗狗名字"> 的廁所紀錄</h1>
+  <div class="sub">記得越多，預測越準。至少累積 5 次上廁所，預測才會出現。</div>
+
+  <div id="status"></div>
+
+  <section class="card">
+    <h2>記一筆</h2>
+    <div class="seg" id="placeSeg">
+      <button data-place="spot" class="spot">✅ 指定位置</button>
+      <button data-place="out" class="out">🌳 在外</button>
+      <button data-place="other" class="other">❌ 家裡其他地方</button>
+    </div>
+    <div class="chips" id="whenChips"></div>
+    <div class="big">
+      <button data-log="pee">💧 尿尿</button>
+      <button data-log="poop" class="poop">💩 大便</button>
+    </div>
+    <div class="acts">
+      <button data-log="meal">🍖<br>吃飯</button>
+      <button data-log="water">🥣<br>喝水</button>
+      <button data-log="play">🎾<br>玩耍</button>
+      <button data-log="sleep">🌙<br>睡覺</button>
+      <button data-log="wake">☀️<br>睡醒</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>定點成功率（近 7 天）</h2>
+    <div class="days" id="days"></div>
+    <div class="legend">綠：指定位置　紫：在外　紅：家裡其他地方</div>
+    <div class="rate" id="rate"></div>
+  </section>
+
+  <section class="card">
+    <h2>一天中哪些時段最常上廁所</h2>
+    <div class="bars" id="hours"></div>
+    <div class="axis" id="hoursAxis"></div>
+    <div class="explain" id="hoursNote" style="margin-top:8px"></div>
+  </section>
+
+  <section class="card">
+    <h2>預測是怎麼算的</h2>
+    <div class="explain">
+      <p style="margin-top:0"><b>一次上廁所</b>：相隔不到 10 分鐘的尿尿與大便合併成一次。在外、在家都算。</p>
+      <p><b>間隔法</b>：算相鄰兩次之間隔了幾分鐘，取最近 14 個間隔的<b>中位數</b>當作「下一次大約什麼時候」。時間窗是這些間隔中間 50% 的範圍，偶爾特別長或特別短的一次影響不大。中間有「睡覺」紀錄的間隔不計入，超過 6 小時的也不計入。</p>
+      <p><b>事件法</b>：吃飯、喝水、玩耍、睡醒之後，通常隔多久會上廁所。某個事件有 3 筆以上有效紀錄，就能用它最近一次的時間往後推。</p>
+      <p><b>睡眠</b>：按「睡覺」後暫停預測。按「睡醒」後，改用「睡醒後多久會上廁所」來預測。</p>
+      <p style="margin-bottom:0">預測只是整理你的紀錄，不是醫學判斷。</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>最近紀錄</h2>
+    <div id="list"></div>
+  </section>
+
+  <section class="card">
+    <h2>備份與還原</h2>
+    <div class="explain">資料只存在這支手機的 app 裡，換手機或清除資料就會消失，請定期備份。<span id="backupAge"></span></div>
+    <div class="btns">
+      <button class="link" id="dlBtn">下載 CSV</button>
+      <button class="link" id="copyBtn">複製 CSV</button>
+      <button class="link" id="impBtn">匯入 CSV</button>
+      <button class="link" id="installBtn" style="display:none">📲 安裝到主畫面</button>
+    </div>
+    <input type="file" id="file" accept=".csv,text/csv,text/plain" style="display:none">
+    <textarea id="csv" style="display:none" placeholder="貼上 CSV 內容後，按下方「確認匯入」"></textarea>
+    <div class="btns"><button class="link" id="confirmImp" style="display:none">確認匯入</button></div>
+    <div class="msg" id="msg"></div>
+  </section>
+
+  <div class="sync" id="sync"></div>
+</main>
+
+<script>
+/* ===== LOGIC_START ===== */
+const TRIG = {meal:'吃飯', water:'喝水', play:'玩耍', wake:'睡醒'};
+const MERGE_MIN = 10, MAX_GAP = 360, TRIG_MAX = 120, TRIG_STALE = 150;
+
+function quantile(sorted, p){
+  if(!sorted.length) return NaN;
+  const i = (sorted.length-1)*p, lo = Math.floor(i), hi = Math.ceil(i);
+  return sorted[lo] + (sorted[hi]-sorted[lo])*(i-lo);
+}
+function stats(arr){
+  const s = arr.slice().sort((a,b)=>a-b);
+  let q1 = quantile(s,.25), q3 = quantile(s,.75), med = quantile(s,.5);
+  if(q3-q1 < 10){ q1 = med-5; q3 = med+5; }
+  return {q1, med, q3, n:s.length};
+}
+function getVisits(events){
+  const tl = events.filter(e=>e.type==='pee'||e.type==='poop').sort((a,b)=>a.t-b.t);
+  const out = [];
+  for(const e of tl){
+    const cur = out[out.length-1];
+    if(cur && e.t-cur.t < MERGE_MIN*60000){
+      if(e.place==='other') cur.place = 'other';
+    } else out.push({t:e.t, place:e.place});
+  }
+  return out;
+}
+function sleepState(events, now){
+  let last = null;
+  for(const e of events){
+    if(e.t>now) continue;
+    if(e.type==='sleep'||e.type==='wake') if(!last || e.t>=last.t) last = e;
+  }
+  return last && last.type==='sleep' ? last : null;
+}
+function predict(events, now){
+  const v = getVisits(events), cands = [];
+  const sl = sleepState(events, now);
+  if(sl) return {cands:[], head:null, state:'asleep', sleepSince:sl.t, visits:v};
+  const sleeps = events.filter(e=>e.type==='sleep').map(e=>e.t);
+  const lastVisit = v.length ? v[v.length-1].t : 0;
+  const wakes = events.filter(e=>e.type==='wake' && e.t<=now);
+  const lastWake = wakes.length ? wakes[wakes.length-1].t : 0;
+  const wokeSinceVisit = lastWake > lastVisit;
+
+  if(v.length >= 2 && !wokeSinceVisit){
+    const gaps = [];
+    for(let i=1;i<v.length;i++){
+      const g = (v[i].t-v[i-1].t)/60000;
+      const slept = sleeps.some(t=>t>v[i-1].t && t<v[i].t);
+      if(g <= MAX_GAP && !slept) gaps.push(g);
+    }
+    const recent = gaps.slice(-14);
+    if(recent.length >= 4){
+      const s = stats(recent), last = v[v.length-1].t;
+      cands.push({kind:'interval', label:'依上廁所的間隔', n:s.n, med:s.med,
+        from:last+s.q1*60000, mid:last+s.med*60000, to:last+s.q3*60000});
+    }
+  }
+  for(const key of Object.keys(TRIG)){
+    const trigs = events.filter(e=>e.type===key && e.t<=now).sort((a,b)=>a.t-b.t);
+    const delays = [];
+    for(const e of trigs){
+      const nx = v.find(x=>x.t>=e.t);
+      if(nx && (nx.t-e.t)/60000 <= TRIG_MAX) delays.push((nx.t-e.t)/60000);
+    }
+    if(delays.length >= 3 && trigs.length){
+      const lt = trigs[trigs.length-1];
+      const consumed = v.some(x=>x.t>lt.t);
+      if(!consumed && (now-lt.t)/60000 <= TRIG_STALE){
+        const s = stats(delays.slice(-10));
+        cands.push({kind:key, label:'依「'+TRIG[key]+'」後的習慣', n:s.n, med:s.med,
+          from:lt.t+s.q1*60000, mid:lt.t+s.med*60000, to:lt.t+s.q3*60000});
+      }
+    }
+  }
+  cands.sort((a,b)=>a.from-b.from);
+  let head = null, state = 'none';
+  if(cands.length){
+    head = cands.find(c=>c.from<=now && now<=c.to);
+    if(head) state='now';
+    else{
+      head = cands.find(c=>c.from>now);
+      if(head) state='wait';
+      else { head = cands[cands.length-1]; state='over'; }
+    }
+  }
+  return {cands, head, state, visits:v, wokeSinceVisit};
+}
+function hourCounts(visits){
+  const h = new Array(24).fill(0);
+  visits.forEach(x=>h[new Date(x.t).getHours()]++);
+  return h;
+}
+function dayKey(t){const d=new Date(t);return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function weekStats(visits, now){
+  const days = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date(now); d.setHours(12,0,0,0); d.setDate(d.getDate()-i);
+    days.push({key:dayKey(d.getTime()), label:(d.getMonth()+1)+'/'+d.getDate(), spot:0, out:0, other:0});
+  }
+  visits.forEach(x=>{
+    const dd = days.find(d=>d.key===dayKey(x.t));
+    if(dd && dd[x.place]!==undefined) dd[x.place]++;
+  });
+  return days;
+}
+/* ===== LOGIC_END ===== */
+
+/* ---------- storage (IndexedDB, mirrored to localStorage) ---------- */
+const LS_KEY = 'dogpotty.v2';
+let S = {name:'狗狗', place:'spot', events:[], lastExport:0, updatedAt:0};
+let ui = {offset:0, custom:'', armed:null};
+
+function idbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open('dogpotty',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function idbGet(k){const db=await idbOpen();return new Promise((res,rej)=>{const q=db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}
+async function idbSet(k,v){const db=await idbOpen();return new Promise((res,rej)=>{const tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
+
+let storeNote = '資料存在這支手機';
+async function loadState(){
+  let a=null,b=null;
+  try{ a = await idbGet('state'); }catch(e){}
+  try{ const raw=localStorage.getItem(LS_KEY); if(raw) b=JSON.parse(raw); }catch(e){}
+  const best = [a,b].filter(x=>x&&Array.isArray(x.events)).sort((x,y)=>(y.updatedAt||0)-(x.updatedAt||0))[0];
+  if(best) S = Object.assign(S,best);
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+}
+let saveTimer=null;
+function persist(){
+  S.updatedAt = Date.now();
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flush, 150);
+}
+async function flush(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); }catch(e){}
+  try{ await idbSet('state', JSON.parse(JSON.stringify(S))); storeNote='資料存在這支手機（已儲存）'; }
+  catch(e){ storeNote='儲存失敗，請盡快下載 CSV 備份'; }
+  const el=$('sync'); if(el) el.textContent=storeNote;
+}
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) flush(); });
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2,'0');
+const hm = t => { const d=new Date(t); return pad(d.getHours())+':'+pad(d.getMinutes()); };
+function rel(mins){
+  mins = Math.round(mins);
+  if(mins < 60) return mins+' 分鐘';
+  const h = Math.floor(mins/60), m = mins%60;
+  return h+' 小時'+(m? ' '+m+' 分鐘':'');
+}
+function toLocalInput(t){ const d=new Date(t); return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes()); }
+const ICON = {pee:'💧 尿尿', poop:'💩 大便', meal:'🍖 吃飯', water:'🥣 喝水', play:'🎾 玩耍', sleep:'🌙 睡覺', wake:'☀️ 睡醒'};
+const PLACE = {spot:'定點', out:'在外', other:'其他地方'};
+const NEXT_PLACE = {spot:'out', out:'other', other:'spot'};
+
+/* ---------- actions ---------- */
+function eventTime(){
+  if(ui.offset==='custom'){
+    const t = ui.custom ? new Date(ui.custom).getTime() : NaN;
+    return isNaN(t) ? Date.now() : Math.min(t, Date.now());
+  }
+  return Date.now() - ui.offset*60000;
+}
+function logEvent(type){
+  const toilet = type==='pee'||type==='poop';
+  S.events.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5), t:eventTime(), type, place:toilet ? S.place : null});
+  S.events.sort((a,b)=>a.t-b.t);
+  if(S.events.length > 5000) S.events = S.events.slice(-5000);
+  ui.offset = 0; ui.custom = ''; ui.armed = null;
+  persist(); render();
+}
+
+/* ---------- render ---------- */
+function renderStatus(now){
+  const p = predict(S.events, now), el = $('status');
+  if(p.state==='asleep'){
+    el.innerHTML = '<div class="status asleep"><div class="head">狀態</div><div class="main">💤 睡覺中</div><div class="note">已睡 '+rel((now-p.sleepSince)/60000)+'，睡覺期間不預測。醒來後請按「☀️ 睡醒」。</div></div>';
+    return;
+  }
+  if(!p.head){
+    let msg = '目前累積 '+p.visits.length+' 次上廁所。間隔法至少需要 5 次，記錄越完整越準。';
+    if(p.wokeSinceVisit) msg = '剛睡醒。要有 3 筆以上「睡醒後多久上廁所」的紀錄才能預測，先記錄幾天吧。';
+    el.innerHTML = '<div class="status none"><div class="head">預測</div><div class="main">資料還不夠</div><div class="note">'+msg+'</div></div>';
+    return;
+  }
+  const h = p.head;
+  let head, main;
+  if(p.state==='wait'){ head='下一次大約在'; main=hm(h.mid)+'（還有 '+rel((h.mid-now)/60000)+'）'; }
+  else if(p.state==='now'){ head='現在進入預測時間窗'; main='該帶出去了 🚶'; }
+  else { head='已超過預測時間'; main='建議立刻帶出去'; }
+  const note = '時間窗 '+hm(h.from)+' – '+hm(h.to)+'，'+h.label+'（根據 '+h.n+' 筆）';
+  const others = p.cands.filter(c=>c!==h).map(c=>
+    '<div class="cand"><span>'+c.label+'<br><small>根據 '+c.n+' 筆</small></span><span style="text-align:right">'+hm(c.mid)+'<br><small>'+hm(c.from)+' – '+hm(c.to)+'</small></span></div>').join('');
+  el.innerHTML = '<div class="status '+p.state+'"><div class="head">'+head+'</div><div class="main">'+main+'</div><div class="note">'+note+'</div>'+
+    (others? '<div style="margin-top:8px">'+others+'</div>':'')+'</div>';
+}
+function renderControls(){
+  document.querySelectorAll('#placeSeg button').forEach(b=>b.classList.toggle('on', b.dataset.place===S.place));
+  const opts = [[0,'現在'],[5,'5 分鐘前'],[10,'10 分鐘前'],[30,'30 分鐘前'],['custom','自訂']];
+  if(ui.offset==='custom' && !ui.custom) ui.custom = toLocalInput(Date.now());
+  $('whenChips').innerHTML = opts.map(([v,l])=>'<button data-when="'+v+'" class="'+(ui.offset===v?'on':'')+'">'+l+'</button>').join('') +
+    (ui.offset==='custom' ? '<input type="datetime-local" id="customT" value="'+ui.custom+'" max="'+toLocalInput(Date.now())+'">' : '');
+}
+function renderWeek(now){
+  const v = getVisits(S.events), days = weekStats(v, now);
+  const mx = Math.max(1, ...days.map(d=>d.spot+d.out+d.other));
+  $('days').innerHTML = days.map(d=>{
+    const tot=d.spot+d.out+d.other;
+    return '<div class="day"><div class="stack"><i class="g" style="height:'+(d.spot/mx*100)+'%"></i><i class="o" style="height:'+(d.out/mx*100)+'%"></i><i class="r" style="height:'+(d.other/mx*100)+'%"></i></div>'+d.label+'<br>'+(tot? d.spot+'/'+(d.spot+d.other) : '–')+'</div>';
+  }).join('');
+  const g = days.reduce((a,d)=>a+d.spot,0), b = days.reduce((a,d)=>a+d.other,0), o = days.reduce((a,d)=>a+d.out,0);
+  let txt;
+  if(g+b>0) txt = '近 7 天在家上廁所 '+(g+b)+' 次，其中 '+g+' 次在指定位置，成功率 '+Math.round(g/(g+b)*100)+'%。';
+  else txt = '近 7 天在家還沒有上廁所紀錄。';
+  if(o) txt += '另外在外 '+o+' 次，不列入成功率。';
+  const t = days[6];
+  if(t.spot+t.other>0) txt += ' 今天在家 '+t.spot+'/'+(t.spot+t.other)+'。';
+  $('rate').textContent = txt;
+  $('days').title = '每天下方的數字是「指定位置次數 / 在家上廁所總次數」';
+}
+function renderHours(){
+  const v = getVisits(S.events), h = hourCounts(v), mx = Math.max(1,...h);
+  $('hours').innerHTML = h.map((c,i)=>'<div style="height:'+(c/mx*100)+'%" title="'+i+' 點：'+c+' 次"></div>').join('');
+  $('hoursAxis').innerHTML = h.map((_,i)=>'<span>'+(i%6===0? i : '')+'</span>').join('');
+  if(v.length < 5){ $('hoursNote').textContent='累積 5 次以上才會顯示時段規律。'; return; }
+  const top = h.map((c,i)=>[c,i]).sort((a,b)=>b[0]-a[0]).slice(0,3).filter(x=>x[0]>0).map(x=>pad(x[1])+':00 左右（'+x[0]+' 次）');
+  $('hoursNote').textContent = '最常出現的時段：'+top.join('、')+'。橫軸是 0–23 點。';
+}
+function renderList(){
+  const ev = S.events.slice().reverse().slice(0,30);
+  if(!ev.length){ $('list').innerHTML='<div class="explain">還沒有紀錄，從上面「記一筆」開始。</div>'; return; }
+  let lastDay = '';
+  $('list').innerHTML = ev.map(e=>{
+    const d = new Date(e.t), dk = (d.getMonth()+1)+'/'+d.getDate();
+    const head = dk!==lastDay ? '<div class="explain" style="margin:8px 0 2px"><b>'+dk+'</b></div>' : '';
+    lastDay = dk;
+    const tag = e.place ? '<button class="tag '+e.place+'" data-flip="'+e.id+'">'+PLACE[e.place]+'</button>' : '';
+    return head+'<div class="row"><span class="t">'+hm(e.t)+'</span><span class="what">'+ICON[e.type]+'</span>'+tag+
+      '<button class="del '+(ui.armed===e.id?'arm':'')+'" data-del="'+e.id+'">'+(ui.armed===e.id?'再按一次刪除':'刪除')+'</button></div>';
+  }).join('');
+}
+function renderBackup(){
+  const el = $('backupAge');
+  if(!S.lastExport) el.textContent = ' 你還沒有備份過。';
+  else el.textContent = ' 上次備份：'+Math.max(0,Math.floor((Date.now()-S.lastExport)/86400000))+' 天前。';
+}
+function render(){
+  const now = Date.now();
+  renderStatus(now); renderControls(); renderWeek(now); renderHours(); renderList(); renderBackup();
+  $('sync').textContent = storeNote;
+}
+
+/* ---------- CSV ---------- */
+function toCSV(){
+  return ['time,type,place'].concat(S.events.map(x=>{
+    const d=new Date(x.t);
+    return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+','+x.type+','+(x.place||'');
+  })).join('\n');
+}
+function importCSV(text){
+  const lines = text.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  const have = new Set(S.events.map(e=>e.t+'|'+e.type));
+  let added=0, skipped=0, bad=0;
+  for(const ln of lines){
+    if(/^time\s*,/i.test(ln)) continue;
+    const m = ln.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})\s*,\s*(\w+)\s*,?\s*(\w*)$/);
+    if(!m || !ICON[m[6]]){ bad++; continue; }
+    const t = new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5]).getTime();
+    const toilet = m[6]==='pee'||m[6]==='poop';
+    const place = toilet ? (PLACE[m[7]] ? m[7] : 'spot') : null;
+    const key = t+'|'+m[6];
+    if(have.has(key)){ skipped++; continue; }
+    have.add(key);
+    S.events.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6), t, type:m[6], place});
+    added++;
+  }
+  S.events.sort((a,b)=>a.t-b.t);
+  persist(); render();
+  return '匯入完成：新增 '+added+' 筆，重複略過 '+skipped+' 筆'+(bad?'，無法辨識 '+bad+' 行':'')+'。';
+}
+const setMsg = t => { $('msg').textContent = t; };
+
+/* ---------- events ---------- */
+let installEvt = null;
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); installEvt=e; $('installBtn').style.display='inline-block'; });
+window.addEventListener('appinstalled', ()=>{ $('installBtn').style.display='none'; });
+
+document.addEventListener('click', async e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  if(b.dataset.log) return logEvent(b.dataset.log);
+  if(b.dataset.place){ S.place = b.dataset.place; persist(); return render(); }
+  if(b.dataset.when!==undefined){ ui.offset = b.dataset.when==='custom' ? 'custom' : Number(b.dataset.when); ui.custom=''; return renderControls(); }
+  if(b.dataset.flip){ const ev=S.events.find(x=>x.id===b.dataset.flip); if(ev){ ev.place=NEXT_PLACE[ev.place]; persist(); render(); } return; }
+  if(b.dataset.del){
+    if(ui.armed===b.dataset.del){ S.events = S.events.filter(x=>x.id!==b.dataset.del); ui.armed=null; persist(); }
+    else ui.armed = b.dataset.del;
+    return render();
+  }
+  if(b.id==='dlBtn'){
+    try{
+      const blob = new Blob(['﻿'+toCSV()],{type:'text/csv;charset=utf-8'});
+      const a = document.createElement('a'); const d=new Date();
+      a.href = URL.createObjectURL(blob);
+      a.download = 'dog-toilet-'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'.csv';
+      document.body.appendChild(a); a.click(); a.remove();
+      S.lastExport = Date.now(); persist(); renderBackup(); setMsg('已下載 CSV，請確認檔案有存好。');
+    }catch(err){ setMsg('下載失敗，請改用「複製 CSV」。'); }
+  }
+  if(b.id==='copyBtn'){
+    const ta=$('csv'); ta.style.display='block'; ta.value=toCSV(); $('confirmImp').style.display='none';
+    let ok=false; try{ await navigator.clipboard.writeText(ta.value); ok=true; }catch(err){}
+    if(!ok){ ta.focus(); ta.select(); }
+    S.lastExport = Date.now(); persist(); renderBackup();
+    setMsg(ok ? '已複製，可貼到備忘錄保存。' : '請長按文字框手動全選複製。');
+  }
+  if(b.id==='impBtn'){ $('file').click(); }
+  if(b.id==='confirmImp'){ setMsg(importCSV($('csv').value)); }
+  if(b.id==='installBtn' && installEvt){ installEvt.prompt(); installEvt=null; }
+});
+$('file').addEventListener('change', async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const text = await f.text();
+  const ta=$('csv'); ta.style.display='block'; ta.value=text.replace(/^﻿/,''); $('confirmImp').style.display='inline-block';
+  setMsg('已讀入檔案「'+f.name+'」，確認內容後按「確認匯入」。'); e.target.value='';
+});
+document.addEventListener('input', e=>{
+  if(e.target.id==='customT'){ ui.custom = e.target.value; }
+  if(e.target.id==='name'){ S.name = e.target.value || '狗狗'; persist(); }
+  if(e.target.id==='csv'){ $('confirmImp').style.display = e.target.value.trim() ? 'inline-block':'none'; }
+});
+
+(async function init(){
+  await loadState();
+  $('name').value = S.name;
+  render();
+  setInterval(()=>renderStatus(Date.now()), 30000);
+  if('serviceWorker' in navigator){ try{ navigator.serviceWorker.register('sw.js'); }catch(e){} }
+})();
+</script>
+</body>
+</html>
